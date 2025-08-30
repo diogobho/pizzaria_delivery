@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍕 Pizzaria Rodrigo's Delivery</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 3em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s; }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { color: #333; margin-bottom: 15px; font-size: 1.5em; }
+        .card p { color: #666; line-height: 1.6; }
+        .apis { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; backdrop-filter: blur(10px); }
+        .apis h2 { color: white; margin-bottom: 20px; text-align: center; }
+        .api-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .api-item { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; }
+        .api-item a { color: white; text-decoration: none; font-weight: bold; }
+        .api-item a:hover { text-decoration: underline; }
+        .status { text-align: center; margin-top: 30px; color: white; }
+        .status-dot { display: inline-block; width: 12px; height: 12px; background: #4CAF50; border-radius: 50%; margin-right: 8px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍕 Pizzaria Rodrigo's Delivery</h1>
+            <p>Sistema completo de delivery - API funcionando perfeitamente!</p>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <h3>🍕 Pizzas</h3>
+                <p><strong>Tradicionais:</strong> Margherita, Calabresa, Portuguesa</p>
+                <p><strong>Premium:</strong> Frango Catupiry, Bacon</p>
+                <p><strong>Especiais:</strong> Quatro Queijos, Camarão</p>
+            </div>
+            
+            <div class="card">
+                <h3>🥙 Esfihas</h3>
+                <p><strong>Tradicionais:</strong> Carne, Frango</p>
+                <p><strong>Premium:</strong> Carne com Queijo, Frango com Catupiry</p>
+                <p><strong>Especiais:</strong> Camarão, Salmão</p>
+            </div>
+            
+            <div class="card">
+                <h3>🥤 Bebidas</h3>
+                <p><strong>Refrigerantes:</strong> Coca-Cola 350ml, Guaraná Antarctica 350ml</p>
+                <p>Todas as bebidas geladas e prontas para entrega!</p>
+            </div>
+        </div>
+
+        <div class="apis">
+            <h2>🔧 APIs Disponíveis</h2>
+            <div class="api-list">
+                <div class="api-item">
+                    <a href="/api/products" target="_blank">GET /api/products</a>
+                    <p>Listar todos os produtos</p>
+                </div>
+                <div class="api-item">
+                    <a href="/api/options/bordas" target="_blank">GET /api/options/bordas</a>
+                    <p>Opções de bordas para pizzas</p>
+                </div>
+                <div class="api-item">
+                    <a href="/api/options/adicionais" target="_blank">GET /api/options/adicionais</a>
+                    <p>Adicionais disponíveis</p>
+                </div>
+                <div class="api-item">
+                    <a href="/api/options/entregadores" target="_blank">GET /api/options/entregadores</a>
+                    <p>Lista de entregadores</p>
+                </div>
+                <div class="api-item">
+                    <a href="/health" target="_blank">GET /health</a>
+                    <p>Status da aplicação</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="status">
+            <p><span class="status-dot"></span>Sistema Online e Funcionando</p>
+            <p>Banco PostgreSQL: Conectado | APIs: Ativas | PM2: Rodando</p>
+        </div>
+    </div>
+</body>
+</html>
