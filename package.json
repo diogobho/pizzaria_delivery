@@ -1,0 +1,35 @@
+{
+  "name": "pizzaria-rodrigos",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "migrate": "psql -h localhost -U pizzaria_user -d pizzaria_rodrigos -f scripts/migrate.sql",
+    "seed": "psql -h localhost -U pizzaria_user -d pizzaria_rodrigos -f scripts/seed-products.sql"
+  },
+  "keywords": ["pizzaria", "delivery", "nodejs", "express"],
+  "author": "Rodrigo's Delivery",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "connect-redis": "^9.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "express-session": "^1.18.2",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "redis": "^5.8.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "description": "Sistema completo de delivery para pizzaria"
+}

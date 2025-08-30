@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+uploads/
+.pm2/
+*.pid
+.DS_Store
+/logs/
