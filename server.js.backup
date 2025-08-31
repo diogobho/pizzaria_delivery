@@ -77,12 +77,3 @@ app.get('/dashboard', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log('🍕 Pizzaria Rodrigo\'s API rodando na porta', PORT);
 });
-
-// Rotas das páginas
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'views', 'login.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
-});
