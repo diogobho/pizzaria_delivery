@@ -36,7 +36,7 @@ app.use(limiter);
 
 // CORS
 app.use(cors({
-  origin: ['http://161.97.127.54:5000', 'http://161.97.127.54'],
+  origin: ['http://161.97.127.54:5000', 'http://161.97.127.54:8080', 'http://161.97.127.54:6000', 'http://161.97.127.54'],
   credentials: true
 }));
 
@@ -73,16 +73,36 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
 });
 
+app.get('/cardapio', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
+});
+
+app.get('/carrinho', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
+});
+
+app.get('/pedidos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
+});
+
+// Middleware de erro global
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    error: 'Algo deu errado!',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Rota não encontrada',
+    path: req.originalUrl
+  });
+});
+
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {
   console.log('🍕 Pizzaria Rodrigo\'s API rodando na porta', PORT);
-});
-
-// Rotas das páginas
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'views', 'login.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
 });

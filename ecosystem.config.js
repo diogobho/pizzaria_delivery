@@ -9,7 +9,7 @@ export default {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
-      PORT: 5000
+      PORT: 8080
     },
     error_file: '/var/www/logs/pizzaria-rodrigos-error.log',
     out_file: '/var/www/logs/pizzaria-rodrigos-out.log',
