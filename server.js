@@ -43,6 +43,7 @@ app.use(cors({
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -61,7 +62,7 @@ app.use('/api/options', optionsRoutes);
 
 // Rota principal
 app.get('/', (req, res) => {
-  res.send('<h1>🍕 Pizzaria Rodrigo\'s Delivery API</h1><p>Servidor funcionando na porta ' + PORT + '</p>');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Iniciar servidor
