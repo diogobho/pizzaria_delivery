@@ -1,93 +1,60 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database.js';
-import { body, validationResult } from 'express-validator';
-import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Registro
-router.post('/register', [
-  body('nome').trim().isLength({ min: 2 }).withMessage('Nome deve ter pelo menos 2 caracteres'),
-  body('email').isEmail().withMessage('Email inválido'),
-  body('senha').isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { nome, email, senha } = req.body;
-
-    // Verificar se usuário já existe
-    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: 'Usuário já existe' });
-    }
-
-    // Hash da senha
-    const hashedPassword = await bcrypt.hash(senha, 10);
-
-    // Inserir usuário
-    const result = await pool.query(
-      'INSERT INTO users (nome, email, senha, tipo) VALUES ($1, $2, $3, $4) RETURNING id, nome, email, tipo',
-      [nome, email, hashedPassword, 'cliente']
-    );
-
-    const user = result.rows[0];
-
-    // Gerar token
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-
-    res.status(201).json({
-      message: 'Usuário criado com sucesso',
-      token,
-      user: {
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        tipo: user.tipo
-      }
-    });
-  } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+// Hash para password: $2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+const users = [
+  {
+    id: 'e9b38c00-457b-4e60-8b30-266f60806772',
+    nome: 'Cliente Teste', 
+    email: 'cliente@teste.com',
+    senha: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    tipo: 'cliente'
+  },
+  {
+    id: '01d47184-7aa7-49c7-89aa-acadaa6c3186',
+    nome: 'Rodrigo',
+    email: 'rodrigo@pizzaria.com', 
+    senha: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    tipo: 'proprietario'
   }
-});
+];
 
 // Login
-router.post('/login', [
-  body('email').isEmail().withMessage('Email inválido'),
-  body('senha').notEmpty().withMessage('Senha é obrigatória')
-], async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
+    console.log('Tentativa de login:', req.body);
     const { email, senha } = req.body;
 
-    // Buscar usuário
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+
+    const user = users.find(u => u.email === email);
     
-    if (result.rows.length === 0) {
+    if (!user) {
+      console.log('Usuário não encontrado:', email);
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    const user = result.rows[0];
+    console.log('Usuário encontrado:', { id: user.id, email: user.email, tipo: user.tipo });
 
-    // Verificar senha
     const isValidPassword = await bcrypt.compare(senha, user.senha);
     
     if (!isValidPassword) {
+      console.log('Senha inválida para:', user.email);
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    // Gerar token
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, tipo: user.tipo }, 
+      process.env.JWT_SECRET || 'pizzaria-rodrigos-super-secret-key-2024', 
+      { expiresIn: '24h' }
+    );
+
+    console.log('Login bem-sucedido para:', user.email);
 
     res.json({
       message: 'Login realizado com sucesso',
@@ -100,21 +67,41 @@ router.post('/login', [
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Erro no login:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
 // Verificar usuário atual
-router.get('/me', authenticateToken, (req, res) => {
-  res.json({
-    user: {
-      id: req.user.id,
-      nome: req.user.nome,
-      email: req.user.email,
-      tipo: req.user.tipo
+router.get('/me', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Token necessário' });
     }
-  });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'pizzaria-rodrigos-super-secret-key-2024');
+    
+    const user = users.find(u => u.id === decoded.userId);
+    
+    if (!user) {
+      return res.status(403).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json({ 
+      user: {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        tipo: user.tipo
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao verificar token:', error);
+    res.status(403).json({ error: 'Token inválido' });
+  }
 });
 
 export default router;
