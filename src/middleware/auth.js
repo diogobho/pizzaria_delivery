@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database.js';
 
 export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -10,25 +9,17 @@ export const authenticateToken = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Buscar usuário no banco
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
-    
-    if (result.rows.length === 0) {
-      return res.status(403).json({ error: 'Usuário não encontrado' });
-    }
-
-    req.user = result.rows[0];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'pizzaria-rodrigos-super-secret-key-2024');
+    req.user = decoded;
     next();
   } catch (error) {
     return res.status(403).json({ error: 'Token inválido' });
   }
 };
 
-export const requireOwner = (req, res, next) => {
+export const requireAdmin = (req, res, next) => {
   if (req.user.tipo !== 'proprietario') {
-    return res.status(403).json({ error: 'Acesso negado. Apenas proprietários.' });
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
   }
   next();
 };

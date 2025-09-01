@@ -6,6 +6,9 @@ import { fileURLToPath } from 'url';
 
 // Importar rotas
 import authRoutes from './src/routes/auth.js';
+import productsRoutes from './src/routes/products.js';
+import ordersRoutes from './src/routes/orders.js';
+import optionsRoutes from './src/routes/options.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +41,9 @@ app.get('/health', (req, res) => {
 
 // Rotas da API
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/options', optionsRoutes);
 
 // Rotas das páginas
 app.get('/', (req, res) => {
@@ -50,6 +56,27 @@ app.get('/login', (req, res) => {
 
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
+});
+
+app.get('/cardapio', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'cardapio.html'));
+});
+
+app.get('/pedidos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'pedidos.html'));
+});
+
+// Páginas administrativas
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'admin.html'));
+});
+
+app.get('/admin/produtos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'admin-produtos.html'));
+});
+
+app.get('/admin/pedidos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'admin-pedidos.html'));
 });
 
 // API de teste
@@ -82,7 +109,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('🛑 Parando servidor...');
+  console.log('�� Parando servidor...');
   server.close(() => {
     console.log('✅ Servidor parado');
     process.exit(0);
