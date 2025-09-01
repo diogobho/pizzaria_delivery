@@ -1,26 +1,9 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { pool } from '../config/database.js';
 
 const router = express.Router();
-
-// Hash para password: $2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
-const users = [
-  {
-    id: 'e9b38c00-457b-4e60-8b30-266f60806772',
-    nome: 'Cliente Teste', 
-    email: 'cliente@teste.com',
-    senha: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    tipo: 'cliente'
-  },
-  {
-    id: '01d47184-7aa7-49c7-89aa-acadaa6c3186',
-    nome: 'Rodrigo',
-    email: 'rodrigo@pizzaria.com', 
-    senha: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    tipo: 'proprietario'
-  }
-];
 
 // Login
 router.post('/login', async (req, res) => {
@@ -32,13 +15,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    const user = users.find(u => u.email === email);
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     
-    if (!user) {
+    if (result.rows.length === 0) {
       console.log('Usuário não encontrado:', email);
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
+    const user = result.rows[0];
     console.log('Usuário encontrado:', { id: user.id, email: user.email, tipo: user.tipo });
 
     const isValidPassword = await bcrypt.compare(senha, user.senha);
@@ -84,11 +68,13 @@ router.get('/me', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'pizzaria-rodrigos-super-secret-key-2024');
     
-    const user = users.find(u => u.id === decoded.userId);
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
     
-    if (!user) {
+    if (result.rows.length === 0) {
       return res.status(403).json({ error: 'Usuário não encontrado' });
     }
+
+    const user = result.rows[0];
 
     res.json({ 
       user: {

@@ -1,56 +1,39 @@
 import express from 'express';
+import { pool } from '../config/database.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Produtos em memória (simulando banco de dados)
-let products = [
-  // Pizzas Tradicionais
-  { id: '1', nome: 'Pizza Margherita', categoria: 'tradicional', tipo: 'pizza', preco: 35.0, estoque: 50, descricao: 'Molho de tomate, mussarela, manjericão', imagem: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '2', nome: 'Pizza Calabresa', categoria: 'tradicional', tipo: 'pizza', preco: 35.0, estoque: 45, descricao: 'Molho de tomate, mussarela, calabresa, cebola', imagem: 'https://images.pexels.com/photos/2619967/pexels-photo-2619967.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '3', nome: 'Pizza Portuguesa', categoria: 'tradicional', tipo: 'pizza', preco: 35.0, estoque: 40, descricao: 'Molho de tomate, mussarela, presunto, ovos, cebola', imagem: 'https://images.pexels.com/photos/1049626/pexels-photo-1049626.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  
-  // Pizzas Premium
-  { id: '4', nome: 'Pizza Frango Catupiry', categoria: 'premium', tipo: 'pizza', preco: 40.0, estoque: 35, descricao: 'Molho de tomate, mussarela, frango desfiado, catupiry', imagem: 'https://images.pexels.com/photos/4394612/pexels-photo-4394612.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '5', nome: 'Pizza Bacon', categoria: 'premium', tipo: 'pizza', preco: 40.0, estoque: 30, descricao: 'Molho de tomate, mussarela, bacon crocante', imagem: 'https://images.pexels.com/photos/1049620/pexels-photo-1049620.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  
-  // Pizzas Especiais
-  { id: '6', nome: 'Pizza Quatro Queijos', categoria: 'especial', tipo: 'pizza', preco: 45.0, estoque: 25, descricao: 'Mussarela, parmesão, gorgonzola, catupiry', imagem: 'https://images.pexels.com/photos/4109111/pexels-photo-4109111.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '7', nome: 'Pizza Camarão', categoria: 'especial', tipo: 'pizza', preco: 45.0, estoque: 20, descricao: 'Molho branco, mussarela, camarão, catupiry', imagem: 'https://images.pexels.com/photos/3915906/pexels-photo-3915906.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  
-  // Esfihas Tradicionais
-  { id: '8', nome: 'Esfiha Carne', categoria: 'tradicional', tipo: 'esfiha', preco: 25.0, estoque: 80, descricao: 'Carne temperada com cebola e especiarias', imagem: 'https://images.pexels.com/photos/4253320/pexels-photo-4253320.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '9', nome: 'Esfiha Frango', categoria: 'tradicional', tipo: 'esfiha', preco: 25.0, estoque: 75, descricao: 'Frango desfiado temperado', imagem: 'https://images.pexels.com/photos/4253319/pexels-photo-4253319.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  
-  // Esfihas Premium
-  { id: '10', nome: 'Esfiha Carne com Queijo', categoria: 'premium', tipo: 'esfiha', preco: 30.0, estoque: 60, descricao: 'Carne temperada coberta com queijo derretido', imagem: 'https://images.pexels.com/photos/4253321/pexels-photo-4253321.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '11', nome: 'Esfiha Frango com Catupiry', categoria: 'premium', tipo: 'esfiha', preco: 30.0, estoque: 55, descricao: 'Frango desfiado com catupiry cremoso', imagem: 'https://images.pexels.com/photos/4253322/pexels-photo-4253322.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  
-  // Esfihas Especiais
-  { id: '12', nome: 'Esfiha Camarão', categoria: 'especial', tipo: 'esfiha', preco: 40.0, estoque: 40, descricao: 'Camarão refogado com temperos especiais', imagem: 'https://images.pexels.com/photos/4253323/pexels-photo-4253323.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '13', nome: 'Esfiha Salmão', categoria: 'especial', tipo: 'esfiha', preco: 45.0, estoque: 30, descricao: 'Salmão grelhado com cream cheese', imagem: 'https://images.pexels.com/photos/4253324/pexels-photo-4253324.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  
-  // Bebidas
-  { id: '14', nome: 'Coca-Cola 350ml', categoria: 'refrigerantes', tipo: 'bebida', preco: 25.0, estoque: 100, descricao: 'Refrigerante de cola gelado', imagem: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400' },
-  { id: '15', nome: 'Guaraná Antarctica 350ml', categoria: 'refrigerantes', tipo: 'bebida', preco: 25.0, estoque: 80, descricao: 'Refrigerante de guaraná gelado', imagem: 'https://images.pexels.com/photos/1292294/pexels-photo-1292294.jpeg?auto=compress&cs=tinysrgb&w=400' }
-];
-
 // Listar produtos (público)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const { categoria, tipo } = req.query;
+    const { categoria, tipo, incluir_estoque } = req.query;
     
-    let filteredProducts = [...products];
+    let query = 'SELECT * FROM products WHERE ativo = true';
+    const params = [];
     
     if (categoria && categoria !== 'todos') {
-      filteredProducts = filteredProducts.filter(p => p.categoria === categoria);
+      query += ' AND categoria = $' + (params.length + 1);
+      params.push(categoria);
     }
     
     if (tipo) {
-      filteredProducts = filteredProducts.filter(p => p.tipo === tipo);
+      query += ' AND tipo_produto = $' + (params.length + 1);
+      params.push(tipo);
     }
     
-    res.json(filteredProducts);
+    query += ' ORDER BY categoria, nome';
+    
+    const result = await pool.query(query, params);
+    
+    let products = result.rows;
+    
+    // Se não incluir estoque, remover essa informação para clientes
+    if (incluir_estoque !== 'true') {
+      products = products.map(({ estoque, ...product }) => product);
+    }
+    
+    res.json(products);
   } catch (error) {
     console.error('Get products error:', error);
     res.status(500).json({ error: 'Erro ao buscar produtos' });
@@ -58,48 +41,61 @@ router.get('/', (req, res) => {
 });
 
 // Buscar produto específico (público)
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const product = products.find(p => p.id === id);
+    const result = await pool.query('SELECT * FROM products WHERE id = $1 AND ativo = true', [id]);
     
-    if (!product) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Produto não encontrado' });
     }
     
-    res.json(product);
+    res.json(result.rows[0]);
   } catch (error) {
     console.error('Get product error:', error);
     res.status(500).json({ error: 'Erro ao buscar produto' });
   }
 });
 
-// Criar produto (Admin only)
-router.post('/', authenticateToken, requireAdmin, (req, res) => {
+// Listar produtos para admin (com estoque)
+router.get('/admin/list', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { nome, categoria, tipo, preco, estoque, descricao, imagem } = req.body;
+    const result = await pool.query(`
+      SELECT *, 
+        CASE 
+          WHEN estoque <= 5 THEN 'baixo'
+          WHEN estoque <= 15 THEN 'medio'
+          ELSE 'alto'
+        END as status_estoque
+      FROM products 
+      ORDER BY tipo_produto, categoria, nome
+    `);
     
-    if (!nome || !categoria || !tipo || !preco) {
-      return res.status(400).json({ error: 'Campos obrigatórios: nome, categoria, tipo, preco' });
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get admin products error:', error);
+    res.status(500).json({ error: 'Erro ao buscar produtos' });
+  }
+});
+
+// Criar produto (Admin only)
+router.post('/', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { nome, categoria, tipo_produto, preco, estoque, descricao, imagem } = req.body;
+    
+    if (!nome || !categoria || !tipo_produto || !preco) {
+      return res.status(400).json({ error: 'Campos obrigatórios: nome, categoria, tipo_produto, preco' });
     }
     
-    const newId = (Math.max(...products.map(p => parseInt(p.id))) + 1).toString();
-    const newProduct = {
-      id: newId,
-      nome,
-      categoria,
-      tipo,
-      preco: parseFloat(preco),
-      estoque: parseInt(estoque) || 0,
-      descricao: descricao || '',
-      imagem: imagem || ''
-    };
-    
-    products.push(newProduct);
+    const result = await pool.query(`
+      INSERT INTO products (nome, categoria, descricao, preco, estoque, imagem, tipo_produto)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [nome, categoria, descricao || '', parseFloat(preco), parseInt(estoque) || 0, imagem || '', tipo_produto]);
     
     res.status(201).json({
       message: 'Produto criado com sucesso',
-      product: newProduct
+      product: result.rows[0]
     });
   } catch (error) {
     console.error('Create product error:', error);
@@ -108,33 +104,35 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // Atualizar produto (Admin only)
-router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, categoria, tipo, preco, estoque, descricao, imagem } = req.body;
+    const { nome, categoria, tipo_produto, preco, estoque, descricao, imagem, ativo } = req.body;
     
-    const productIndex = products.findIndex(p => p.id === id);
+    const result = await pool.query(`
+      UPDATE products 
+      SET nome = COALESCE($1, nome),
+          categoria = COALESCE($2, categoria),
+          tipo_produto = COALESCE($3, tipo_produto),
+          preco = COALESCE($4, preco),
+          estoque = COALESCE($5, estoque),
+          descricao = COALESCE($6, descricao),
+          imagem = COALESCE($7, imagem),
+          ativo = COALESCE($8, ativo),
+          updated_at = NOW()
+      WHERE id = $9
+      RETURNING *
+    `, [nome, categoria, tipo_produto, preco ? parseFloat(preco) : null, 
+        estoque !== undefined ? parseInt(estoque) : null, descricao, imagem, 
+        ativo !== undefined ? ativo : null, id]);
     
-    if (productIndex === -1) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Produto não encontrado' });
     }
     
-    const updatedProduct = {
-      ...products[productIndex],
-      nome: nome || products[productIndex].nome,
-      categoria: categoria || products[productIndex].categoria,
-      tipo: tipo || products[productIndex].tipo,
-      preco: preco ? parseFloat(preco) : products[productIndex].preco,
-      estoque: estoque !== undefined ? parseInt(estoque) : products[productIndex].estoque,
-      descricao: descricao !== undefined ? descricao : products[productIndex].descricao,
-      imagem: imagem !== undefined ? imagem : products[productIndex].imagem
-    };
-    
-    products[productIndex] = updatedProduct;
-    
     res.json({
       message: 'Produto atualizado com sucesso',
-      product: updatedProduct
+      product: result.rows[0]
     });
   } catch (error) {
     console.error('Update product error:', error);
@@ -143,25 +141,73 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // Deletar produto (Admin only)
-router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const productIndex = products.findIndex(p => p.id === id);
     
-    if (productIndex === -1) {
+    // Soft delete
+    const result = await pool.query(`
+      UPDATE products 
+      SET ativo = false, updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+    `, [id]);
+    
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Produto não encontrado' });
     }
     
-    const deletedProduct = products[productIndex];
-    products.splice(productIndex, 1);
-    
     res.json({
-      message: 'Produto deletado com sucesso',
-      product: deletedProduct
+      message: 'Produto removido com sucesso',
+      product: result.rows[0]
     });
   } catch (error) {
     console.error('Delete product error:', error);
-    res.status(500).json({ error: 'Erro ao deletar produto' });
+    res.status(500).json({ error: 'Erro ao remover produto' });
+  }
+});
+
+// Atualizar estoque (Admin only)
+router.patch('/:id/estoque', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estoque, operacao } = req.body;
+    
+    let query;
+    let params;
+    
+    if (operacao === 'adicionar' || operacao === 'remover') {
+      const sinal = operacao === 'adicionar' ? '+' : '-';
+      query = `
+        UPDATE products 
+        SET estoque = GREATEST(0, estoque ${sinal} $1), updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `;
+      params = [parseInt(estoque), id];
+    } else {
+      query = `
+        UPDATE products 
+        SET estoque = $1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `;
+      params = [parseInt(estoque), id];
+    }
+    
+    const result = await pool.query(query, params);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Produto não encontrado' });
+    }
+    
+    res.json({
+      message: 'Estoque atualizado com sucesso',
+      product: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update stock error:', error);
+    res.status(500).json({ error: 'Erro ao atualizar estoque' });
   }
 });
 
