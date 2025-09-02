@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Cadastros</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .header { background: #e53e3e; color: white; padding: 20px 0; }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .cadastro-card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .cadastro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }
+        .info-item { padding: 10px; background: #f8f9fa; border-radius: 5px; }
+        .info-label { font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold; }
+        .info-value { margin-top: 5px; color: #333; }
+        .actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-approve { background: #4caf50; color: white; }
+        .btn-reject { background: #f44336; color: white; }
+        .btn:hover { opacity: 0.8; }
+        .nav-menu { display: flex; gap: 20px; }
+        .nav-menu a { color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; }
+        .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
+        .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1>Rodrigo's Delivery - Admin</h1>
+                <p>Gestão de Cadastros</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/produtos">Produtos</a>
+                <a href="/admin/pedidos">Pedidos</a>
+                <a href="/admin/cadastros" class="active">Cadastros</a>
+            </nav>
+            <button class="logout-btn" onclick="logout()">Sair</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Cadastros Pendentes</h2>
+        <div id="cadastrosContainer">Carregando...</div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || user.tipo !== 'proprietario') {
+            window.location.href = '/login';
+        }
+
+        async function carregarCadastros() {
+            try {
+                const response = await fetch('/api/cadastro/pendentes', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const cadastros = await response.json();
+                const container = document.getElementById('cadastrosContainer');
+                
+                if (cadastros.length === 0) {
+                    container.innerHTML = '<p>Nenhum cadastro pendente</p>';
+                    return;
+                }
+                
+                container.innerHTML = cadastros.map(cadastro => `
+                    <div class="cadastro-card">
+                        <div class="cadastro-header">
+                            <h3>${cadastro.nome}</h3>
+                            <small>${new Date(cadastro.created_at).toLocaleString('pt-BR')}</small>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Email</div>
+                                <div class="info-value">${cadastro.email}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Telefone</div>
+                                <div class="info-value">${cadastro.telefone}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Cidade</div>
+                                <div class="info-value">${cadastro.cidade || 'N/I'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Endereço</div>
+                            <div class="info-value">${cadastro.endereco}</div>
+                        </div>
+                        
+                        <div class="actions">
+                            <button class="btn btn-approve" onclick="aprovar('${cadastro.id}')">Aprovar</button>
+                            <button class="btn btn-reject" onclick="rejeitar('${cadastro.id}')">Rejeitar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('cadastrosContainer').innerHTML = '<p>Erro ao carregar cadastros</p>';
+            }
+        }
+
+        async function aprovar(id) {
+            if (!confirm('Aprovar este cadastro?')) return;
+            
+            try {
+                const response = await fetch(`/api/cadastro/aprovar/${id}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert('Cadastro aprovado!');
+                    carregarCadastros();
+                }
+            } catch (error) {
+                alert('Erro ao aprovar cadastro');
+            }
+        }
+
+        async function rejeitar(id) {
+            const motivo = prompt('Motivo da rejeição (opcional):');
+            if (motivo === null) return;
+            
+            try {
+                const response = await fetch(`/api/cadastro/rejeitar/${id}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ motivo })
+                });
+                
+                if (response.ok) {
+                    alert('Cadastro rejeitado');
+                    carregarCadastros();
+                }
+            } catch (error) {
+                alert('Erro ao rejeitar cadastro');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+
+        carregarCadastros();
+        setInterval(carregarCadastros, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+#!/bin/bash
+
+echo "🍕 Corrigindo aplicação Pizzaria Rodrigo's completa..."
+cd /var/www/apps/pizzaria-rodrigos
+
+# 1. Backup dos arquivos atuais
+echo "📋 Criando backup..."
+cp -r public/views public/views.backup.$(date +%Y%m%d_%H%M) 2>/dev/null || true
+
+# 2. Criar página admin-produtos.html CORRETA
+echo "🔧 Criando página de gestão de produtos..."
+cat > public/views/admin-produtos.html << 'HTML_EOF'
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Produtos - Rodrigo's Delivery</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .header { background: #e53e3e; color: white; padding: 15px 0; }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-menu { display: flex; gap: 20px; }
+        .nav-menu a { color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; }
+        .nav-menu a.active { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .page-header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .btn-primary { background: #e53e3e; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .product-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .loading { text-align: center; padding: 50px; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>�� Rodrigo's Admin</h1>
+            <nav class="nav-menu">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/produtos" class="active">Produtos</a>
+                <a href="/admin/pedidos">Pedidos</a>
+            </nav>
+            <button onclick="logout()">Sair</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h2>Gestão de Produtos</h2>
+            <button class="btn-primary" onclick="alert('Adicionar produto - Em desenvolvimento')">+ Novo Produto</button>
+        </div>
+
+        <div id="productsContainer" class="products-grid">
+            <div class="loading">Carregando produtos...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || user.tipo !== 'proprietario') {
+            window.location.href = '/login';
+        }
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                
+                const container = document.getElementById('productsContainer');
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="loading">Nenhum produto encontrado</div>';
+                    return;
+                }
+
+                container.innerHTML = products.map(product => `
+                    <div class="product-card">
+                        <h3>${product.nome}</h3>
+                        <p>R$ ${parseFloat(product.preco).toFixed(2)}</p>
+                        <p>Estoque: ${product.estoque || 0}</p>
+                        <p>${product.categoria}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('productsContainer').innerHTML = '<div class="loading">Erro ao carregar</div>';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProducts);
+    </script>
+</body>
+</html>
+HTML_EOF
+
+# 3. Verificar se o server.js está funcionando
+echo "🔧 Verificando server.js..."
+if ! node -c server.js; then
+    echo "❌ Erro de sintaxe no server.js - corrigindo..."
+    cp server.js.backup server.js 2>/dev/null || cp server.js.broken server.js.backup
+fi
+
+# 4. Reiniciar aplicação
+echo "🔄 Reiniciando aplicação..."
+pm2 restart pizzaria-rodrigos
+
+# 5. Aguardar e testar
+sleep 3
+echo "✅ Testando páginas..."
+curl -s -o /dev/null -w "Admin Produtos: %{http_code}\n" "http://161.97.127.54:8080/admin/produtos"
+curl -s -o /dev/null -w "API Health: %{http_code}\n" "http://161.97.127.54:8080/health"
+
+echo ""
+echo "🍕 Correção básica aplicada!"
+echo "📋 Teste acessando: http://161.97.127.54:8080/admin/produtos"
