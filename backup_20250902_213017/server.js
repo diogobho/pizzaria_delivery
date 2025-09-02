@@ -1,0 +1,131 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Importar rotas
+import authRoutes from './src/routes/auth.js';
+import productsRoutes from './src/routes/products.js';
+import ordersRoutes from './src/routes/orders.js';
+import optionsRoutes from './src/routes/options.js';
+import cadastroRoutes from './src/routes/cadastro.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+console.log('🚀 Iniciando Pizzaria Rodrigos na porta', PORT);
+
+// Middlewares
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    service: 'Pizzaria Rodrigos',
+    timestamp: new Date().toISOString(),
+    port: PORT
+  });
+});
+
+// Rotas da API
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/options', optionsRoutes);
+app.use('/api/cadastro', cadastroRoutes);
+
+// Rotas das páginas
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'login.html'));
+});
+
+app.get('/cadastro', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'cadastro.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
+});
+
+app.get('/cardapio', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'cardapio.html'));
+});
+
+app.get('/carrinho', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'carrinho.html'));
+});
+
+app.get('/pedidos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'pedidos.html'));
+});
+
+// Páginas administrativas
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'admin.html'));
+});
+
+app.get('/admin/produtos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'admin-produtos.html'));
+});
+
+app.get('/admin/pedidos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'admin-pedidos.html'));
+});
+
+app.get('/admin/cadastros', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'admin-cadastros.html'));
+});
+
+// API de teste
+app.get('/api/test', (req, res) => {
+  res.json({
+    message: 'API da Pizzaria funcionando!',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Página não encontrada',
+    path: req.originalUrl
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Erro:', err);
+  res.status(500).json({ error: 'Erro interno do servidor' });
+});
+
+// Iniciar servidor
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🍕 Pizzaria Rodrigo's rodando na porta ${PORT}`);
+  console.log(`🌐 Acesse: http://161.97.127.54:${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('🛑 Parando servidor...');
+  server.close(() => {
+    console.log('✅ Servidor parado');
+    process.exit(0);
+  });
+});
