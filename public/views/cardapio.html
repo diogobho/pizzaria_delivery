@@ -1,1 +1,645 @@
-[O conteúdo HTML do cardápio moderno seria inserido aqui - mesmo código do artifact anterior]
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio - Pizzaria Rodrigo's</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; line-height: 1.6; }
+        
+        .header { background: linear-gradient(135deg, #e53e3e, #c62d2d); color: white; padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5em; font-weight: bold; }
+        .nav-menu { display: flex; gap: 20px; }
+        .nav-menu a { color: white; text-decoration: none; padding: 10px 15px; border-radius: 8px; transition: 0.3s; }
+        .nav-menu a:hover, .nav-menu a.active { background: rgba(255,255,255,0.2); }
+        .cart-info { display: flex; align-items: center; gap: 15px; }
+        .cart-count { background: #fff; color: #e53e3e; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9em; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        .categories-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+        .category-btn { padding: 12px 20px; border: 2px solid #e53e3e; background: white; color: #e53e3e; border-radius: 25px; cursor: pointer; transition: 0.3s; font-weight: 500; }
+        .category-btn.active, .category-btn:hover { background: #e53e3e; color: white; transform: translateY(-2px); }
+        
+        .products-section { margin-bottom: 40px; }
+        .section-title { font-size: 2.2em; color: #333; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #e53e3e; position: relative; }
+        .section-title:before { content: ''; position: absolute; bottom: -3px; left: 0; width: 80px; height: 3px; background: #ff6b6b; }
+        
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .product-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s; }
+        .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.15); }
+        
+        .product-image { width: 100%; height: 220px; object-fit: cover; position: relative; }
+        .product-info { padding: 25px; }
+        .product-name { font-size: 1.3em; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .product-description { color: #666; margin-bottom: 15px; font-size: 0.95em; line-height: 1.5; }
+        .product-price { font-size: 1.4em; font-weight: bold; color: #e53e3e; margin-bottom: 20px; }
+        .product-actions { display: flex; gap: 10px; }
+        .add-btn { flex: 1; padding: 12px; background: linear-gradient(135deg, #e53e3e, #c62d2d); color: white; border: none; border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: 500; }
+        .add-btn:hover { background: linear-gradient(135deg, #c62d2d, #a02626); transform: translateY(-2px); }
+        .view-btn { padding: 12px 16px; background: #f8f9fa; color: #666; border: 1px solid #ddd; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .view-btn:hover { background: #e9ecef; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 3% auto; padding: 0; border-radius: 20px; width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal-header { background: linear-gradient(135deg, #e53e3e, #c62d2d); color: white; padding: 25px; border-radius: 20px 20px 0 0; }
+        .modal-title { font-size: 1.5em; font-weight: bold; }
+        .close { color: white; float: right; font-size: 28px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .close:hover { opacity: 0.8; transform: scale(1.1); }
+        .modal-body { padding: 30px; }
+        
+        .format-selection { margin-bottom: 30px; }
+        .format-selection h3 { margin-bottom: 15px; color: #333; font-size: 1.2em; }
+        .format-options { display: flex; gap: 15px; }
+        .format-btn { padding: 12px 20px; border: 2px solid #e53e3e; background: white; color: #e53e3e; border-radius: 10px; cursor: pointer; transition: 0.3s; flex: 1; text-align: center; font-weight: 500; }
+        .format-btn.active { background: #e53e3e; color: white; }
+        
+        .flavor-selection { margin-bottom: 30px; }
+        .flavor-selection h3 { margin-bottom: 15px; color: #333; font-size: 1.2em; }
+        .flavor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .flavor-btn { padding: 15px; border: 2px solid #ddd; background: white; border-radius: 10px; cursor: pointer; transition: 0.3s; text-align: center; font-size: 0.9em; }
+        .flavor-btn.selected { border-color: #e53e3e; background: #fff5f5; color: #e53e3e; font-weight: 500; }
+        .flavor-btn:hover { border-color: #e53e3e; }
+        
+        .options-section { margin-bottom: 30px; }
+        .options-section h3 { margin-bottom: 15px; color: #333; font-size: 1.2em; }
+        .option-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 12px; transition: 0.3s; }
+        .option-item:hover { border-color: #e53e3e; background: #fff5f5; }
+        .option-checkbox { margin-right: 12px; transform: scale(1.2); }
+        .option-label { display: flex; align-items: center; cursor: pointer; flex: 1; }
+        .option-price { font-weight: bold; color: #e53e3e; }
+        .option-select { margin-left: 15px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 5px; }
+        
+        .quantity-section { margin-bottom: 30px; text-align: center; }
+        .quantity-section h3 { margin-bottom: 15px; color: #333; font-size: 1.2em; }
+        .quantity-controls { display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .qty-btn { width: 45px; height: 45px; border: none; background: #e53e3e; color: white; border-radius: 50%; font-size: 1.3em; cursor: pointer; transition: 0.3s; }
+        .qty-btn:hover { background: #c62d2d; transform: scale(1.1); }
+        .quantity-input { width: 80px; text-align: center; font-size: 1.3em; border: 2px solid #ddd; border-radius: 10px; padding: 10px; }
+        
+        .total-section { text-align: center; padding: 25px; background: #f8f9fa; border-radius: 15px; margin-top: 20px; }
+        .total-price { font-size: 1.8em; font-weight: bold; color: #e53e3e; margin-bottom: 20px; }
+        .add-to-cart-btn { padding: 15px 40px; background: linear-gradient(135deg, #28a745, #20963d); color: white; border: none; border-radius: 12px; font-size: 1.1em; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .add-to-cart-btn:hover { background: linear-gradient(135deg, #20963d, #1e7e34); transform: translateY(-2px); }
+        
+        .loading { text-align: center; padding: 60px; color: #666; font-size: 1.1em; }
+        .empty-state { text-align: center; padding: 60px; color: #999; }
+        .error-state { text-align: center; padding: 60px; color: #e53e3e; }
+        
+        @media (max-width: 768px) {
+            .products-grid { grid-template-columns: 1fr; }
+            .modal-content { width: 95%; margin: 10% auto; }
+            .categories-nav { flex-direction: column; }
+            .format-options { flex-direction: column; }
+            .quantity-controls { gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🍕 Pizzaria Rodrigo's</div>
+            <nav class="nav-menu">
+                <a href="/">Home</a>
+                <a href="/cardapio" class="active">Cardápio</a>
+                <a href="/pedidos">Meus Pedidos</a>
+                <a href="/login">Login</a>
+            </nav>
+            <div class="cart-info">
+                <a href="/carrinho" style="color: white; text-decoration: none;">
+                    🛒 Carrinho <span class="cart-count" id="cartCount">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="categories-nav" id="categoriesNav">
+            <button class="category-btn active" data-categoria="todos">🍽️ Todos</button>
+        </div>
+
+        <div id="productsContainer">
+            <div class="loading">Carregando cardápio delicioso... 🍕</div>
+        </div>
+    </div>
+
+    <!-- Modal de Customização -->
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="fecharModal()">&times;</span>
+                <h2 class="modal-title" id="modalTitle">Personalizar Produto</h2>
+            </div>
+            <div class="modal-body">
+                <!-- Seleção de Formato (apenas para pizzas) -->
+                <div id="formatSection" class="format-selection" style="display: none;">
+                    <h3>🍕 Escolha o formato:</h3>
+                    <div class="format-options">
+                        <button class="format-btn active" data-format="inteira">Pizza Inteira</button>
+                        <button class="format-btn" data-format="meia">Meia a Meia (2 sabores)</button>
+                    </div>
+                </div>
+
+                <!-- Seleção de Sabores -->
+                <div id="flavorSection" class="flavor-selection" style="display: none;">
+                    <h3 id="flavorTitle">🎯 Escolha o sabor:</h3>
+                    <div id="flavorGrid" class="flavor-grid"></div>
+                </div>
+
+                <!-- Seleção de Borda (apenas para pizzas) -->
+                <div id="borderSection" class="options-section" style="display: none;">
+                    <h3>🔥 Escolha a borda:</h3>
+                    <div id="borderOptions"></div>
+                </div>
+
+                <!-- Seleção de Adicionais -->
+                <div id="additionsSection" class="options-section" style="display: none;">
+                    <h3>➕ Adicionais:</h3>
+                    <div id="additionOptions"></div>
+                </div>
+
+                <!-- Quantidade -->
+                <div class="quantity-section">
+                    <h3>📊 Quantidade:</h3>
+                    <div class="quantity-controls">
+                        <button class="qty-btn" onclick="alterarQuantidade(-1)">-</button>
+                        <input type="number" id="quantityInput" class="quantity-input" value="1" min="1" onchange="calcularTotal()">
+                        <button class="qty-btn" onclick="alterarQuantidade(1)">+</button>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="total-section">
+                    <div class="total-price" id="totalPrice">R$ 0,00</div>
+                    <button class="add-to-cart-btn" onclick="adicionarAoCarrinho()">Adicionar ao Carrinho</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let produtos = [];
+        let produtosAgrupados = {};
+        let bordas = [];
+        let adicionais = [];
+        let produtoAtual = null;
+        let formatoSelecionado = 'inteira';
+        let saboresSelecionados = [];
+        let bordaSelecionada = null;
+        let adicionaisSelecionados = [];
+
+        async function carregarCardapio() {
+            try {
+                const [produtosResponse, bordasResponse, adicionaisResponse] = await Promise.all([
+                    fetch('/api/products'),
+                    fetch('/api/options/bordas'),
+                    fetch('/api/options/adicionais')
+                ]);
+
+                if (!produtosResponse.ok || !bordasResponse.ok || !adicionaisResponse.ok) {
+                    throw new Error('Erro ao carregar dados');
+                }
+
+                const produtosData = await produtosResponse.json();
+                produtos = produtosData.produtos || produtosData || [];
+                produtosAgrupados = produtosData.produtosAgrupados || {};
+
+                bordas = await bordasResponse.json();
+                adicionais = await adicionaisResponse.json();
+
+                console.log('Dados carregados:', { produtos: produtos.length, bordas: bordas.length, adicionais: adicionais.length });
+
+                if (Object.keys(produtosAgrupados).length === 0 && produtos.length > 0) {
+                    // Agrupar manualmente se não vier agrupado
+                    produtos.forEach(produto => {
+                        const categoria = produto.categoria_display || produto.categoria || 'Outros';
+                        if (!produtosAgrupados[categoria]) {
+                            produtosAgrupados[categoria] = [];
+                        }
+                        produtosAgrupados[categoria].push(produto);
+                    });
+                }
+
+                criarNavegacaoCategorias();
+                exibirProdutos();
+                atualizarCarrinho();
+            } catch (error) {
+                console.error('Erro ao carregar cardápio:', error);
+                document.getElementById('productsContainer').innerHTML = 
+                    '<div class="error-state">❌ Erro ao carregar o cardápio. Tente atualizar a página.</div>';
+            }
+        }
+
+        function criarNavegacaoCategorias() {
+            const nav = document.getElementById('categoriesNav');
+            const categorias = ['todos', ...Object.keys(produtosAgrupados)];
+            
+            const icones = {
+                'todos': '🍽️',
+                'Pizzas Tradicionais': '🍕',
+                'Pizzas Premium': '🍕',
+                'Pizzas Especiais': '🍕',
+                'Esfihas Tradicionais': '🥟',
+                'Esfihas Premium': '🥟',
+                'Esfihas Especiais': '🥟',
+                'Bebidas': '🥤'
+            };
+            
+            nav.innerHTML = categorias.map(categoria => `
+                <button class="category-btn ${categoria === 'todos' ? 'active' : ''}" 
+                        data-categoria="${categoria}" onclick="filtrarCategoria('${categoria}')">
+                    ${icones[categoria] || '📋'} ${categoria === 'todos' ? 'Todos' : categoria}
+                </button>
+            `).join('');
+        }
+
+        function filtrarCategoria(categoria) {
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-categoria="${categoria}"]`).classList.add('active');
+            exibirProdutos(categoria);
+        }
+
+        function exibirProdutos(categoriaFiltro = 'todos') {
+            const container = document.getElementById('productsContainer');
+            
+            if (produtos.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhum produto disponível no momento.</div>';
+                return;
+            }
+
+            let categoriasParaExibir = categoriaFiltro === 'todos' ? 
+                Object.keys(produtosAgrupados) : [categoriaFiltro];
+
+            container.innerHTML = categoriasParaExibir.map(categoria => {
+                const produtosDaCategoria = produtosAgrupados[categoria] || [];
+                
+                if (produtosDaCategoria.length === 0) return '';
+
+                return `
+                    <div class="products-section">
+                        <h2 class="section-title">${categoria}</h2>
+                        <div class="products-grid">
+                            ${produtosDaCategoria.map(produto => `
+                                <div class="product-card">
+                                    <img src="${produto.imagem || 'https://via.placeholder.com/300x200/e53e3e/ffffff?text=Produto'}" 
+                                         alt="${produto.nome}" class="product-image" 
+                                         onerror="this.src='https://via.placeholder.com/300x200/e53e3e/ffffff?text=Produto'">
+                                    <div class="product-info">
+                                        <h3 class="product-name">${produto.nome}</h3>
+                                        <p class="product-description">${produto.descricao || 'Produto delicioso feito especialmente para você!'}</p>
+                                        <div class="product-price">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
+                                        <div class="product-actions">
+                                            <button class="add-btn" onclick="abrirModal('${produto.id}')">
+                                                ${produto.tipo_produto === 'pizza' ? '🍕 Personalizar' : 
+                                                  produto.tipo_produto === 'esfiha' ? '🥟 Escolher Adicionais' : '➕ Adicionar'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function abrirModal(produtoId) {
+            produtoAtual = produtos.find(p => p.id === produtoId);
+            if (!produtoAtual) {
+                alert('Produto não encontrado');
+                return;
+            }
+
+            document.getElementById('modalTitle').textContent = `Personalizar ${produtoAtual.nome}`;
+            
+            // Reset valores
+            formatoSelecionado = 'inteira';
+            saboresSelecionados = [];
+            bordaSelecionada = null;
+            adicionaisSelecionados = [];
+            document.getElementById('quantityInput').value = 1;
+
+            configurarModal();
+            calcularTotal();
+            document.getElementById('customModal').style.display = 'block';
+        }
+
+        function configurarModal() {
+            const tipoProduto = produtoAtual.tipo_produto;
+            const categoria = produtoAtual.categoria;
+
+            // Seção de formato (apenas para pizzas)
+            const formatSection = document.getElementById('formatSection');
+            if (tipoProduto === 'pizza' && produtoAtual.permite_meia) {
+                formatSection.style.display = 'block';
+                configurarFormato();
+            } else {
+                formatSection.style.display = 'none';
+            }
+
+            // Seção de sabores
+            const flavorSection = document.getElementById('flavorSection');
+            if (tipoProduto === 'pizza' || tipoProduto === 'esfiha') {
+                flavorSection.style.display = 'block';
+                configurarSabores(categoria, tipoProduto);
+            } else {
+                flavorSection.style.display = 'none';
+                // Para bebidas, selecionar automaticamente
+                saboresSelecionados = [produtoAtual.id];
+            }
+
+            // Seção de borda (apenas para pizzas)
+            const borderSection = document.getElementById('borderSection');
+            if (tipoProduto === 'pizza') {
+                borderSection.style.display = 'block';
+                configurarBordas(categoria);
+            } else {
+                borderSection.style.display = 'none';
+            }
+
+            // Seção de adicionais
+            const additionsSection = document.getElementById('additionsSection');
+            if (tipoProduto === 'pizza' || tipoProduto === 'esfiha') {
+                additionsSection.style.display = 'block';
+                configurarAdicionais(tipoProduto);
+            } else {
+                additionsSection.style.display = 'none';
+            }
+        }
+
+        function configurarFormato() {
+            document.querySelectorAll('.format-btn').forEach(btn => {
+                btn.onclick = function() {
+                    document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    formatoSelecionado = this.dataset.format;
+                    
+                    // Atualizar título dos sabores
+                    const flavorTitle = document.getElementById('flavorTitle');
+                    flavorTitle.textContent = formatoSelecionado === 'meia' ? 
+                        '🎯 Escolha 2 sabores:' : '🎯 Escolha o sabor:';
+                    
+                    saboresSelecionados = [];
+                    document.querySelectorAll('.flavor-btn').forEach(btn => btn.classList.remove('selected'));
+                    calcularTotal();
+                };
+            });
+        }
+
+        function configurarSabores(categoria, tipoProduto) {
+            const saboresDisponiveis = produtos.filter(p => 
+                p.categoria === categoria && p.tipo_produto === tipoProduto && p.id !== produtoAtual.id
+            );
+            
+            // Incluir o produto atual também
+            saboresDisponiveis.unshift(produtoAtual);
+
+            const flavorGrid = document.getElementById('flavorGrid');
+            flavorGrid.innerHTML = saboresDisponiveis.map(sabor => `
+                <button class="flavor-btn" data-sabor="${sabor.id}" onclick="selecionarSabor('${sabor.id}')">
+                    ${sabor.nome}
+                </button>
+            `).join('');
+        }
+
+        function selecionarSabor(saborId) {
+            const maxSabores = formatoSelecionado === 'meia' ? 2 : 1;
+            
+            if (saboresSelecionados.includes(saborId)) {
+                saboresSelecionados = saboresSelecionados.filter(id => id !== saborId);
+                document.querySelector(`[data-sabor="${saborId}"]`).classList.remove('selected');
+            } else if (saboresSelecionados.length < maxSabores) {
+                saboresSelecionados.push(saborId);
+                document.querySelector(`[data-sabor="${saborId}"]`).classList.add('selected');
+            } else if (maxSabores === 1) {
+                // Substituir sabor único
+                document.querySelectorAll('.flavor-btn').forEach(btn => btn.classList.remove('selected'));
+                saboresSelecionados = [saborId];
+                document.querySelector(`[data-sabor="${saborId}"]`).classList.add('selected');
+            }
+            
+            calcularTotal();
+        }
+
+        function configurarBordas(categoria) {
+            const borderOptions = document.getElementById('borderOptions');
+            borderOptions.innerHTML = bordas.map((borda, index) => {
+                const isGratis = borda.categoria_gratuita && borda.categoria_gratuita.includes(categoria);
+                const preco = isGratis ? 0 : borda.preco_adicional;
+                
+                return `
+                    <div class="option-item">
+                        <label class="option-label">
+                            <input type="radio" name="borda" value="${borda.id}" class="option-checkbox" 
+                                   ${index === 0 ? 'checked' : ''} onchange="selecionarBorda('${borda.id}', ${preco})">
+                            <span>${borda.nome}</span>
+                        </label>
+                        <span class="option-price">
+                            ${isGratis ? '(Grátis)' : preco > 0 ? `+R$ ${preco.toFixed(2)}` : ''}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+
+            // Selecionar primeira borda por padrão
+            if (bordas.length > 0) {
+                const primeiraBorda = bordas[0];
+                const isGratis = primeiraBorda.categoria_gratuita && primeiraBorda.categoria_gratuita.includes(categoria);
+                bordaSelecionada = {
+                    id: primeiraBorda.id,
+                    nome: primeiraBorda.nome,
+                    preco: isGratis ? 0 : primeiraBorda.preco_adicional
+                };
+            }
+        }
+
+        function selecionarBorda(bordaId, preco) {
+            const borda = bordas.find(b => b.id === bordaId);
+            bordaSelecionada = {
+                id: bordaId,
+                nome: borda.nome,
+                preco: preco
+            };
+            calcularTotal();
+        }
+
+        function configurarAdicionais(tipoProduto) {
+            fetch(`/api/options/adicionais?tipo=${tipoProduto}`)
+                .then(response => response.json())
+                .then(adicionaisTipo => {
+                    const additionOptions = document.getElementById('additionOptions');
+                    additionOptions.innerHTML = adicionaisTipo.map(adicional => `
+                        <div class="option-item">
+                            <label class="option-label">
+                                <input type="checkbox" value="${adicional.id}" class="option-checkbox" 
+                                       onchange="selecionarAdicional('${adicional.id}', '${adicional.nome}', ${adicional.preco})">
+                                <span>${adicional.nome}</span>
+                            </label>
+                            <span class="option-price">+R$ ${parseFloat(adicional.preco).toFixed(2)}</span>
+                            ${tipoProduto === 'pizza' ? `
+                                <select style="display: none;" id="tipo_${adicional.id}" class="option-select">
+                                    <option value="inteira">Pizza Inteira</option>
+                                    <option value="meia">Meia Pizza</option>
+                                </select>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar adicionais:', error);
+                    document.getElementById('additionOptions').innerHTML = '<p>Erro ao carregar adicionais</p>';
+                });
+        }
+
+        function selecionarAdicional(adicionalId, nome, preco) {
+            const checkbox = document.querySelector(`input[value="${adicionalId}"]`);
+            const tipoSelect = document.getElementById(`tipo_${adicionalId}`);
+            
+            if (checkbox.checked) {
+                if (tipoSelect) tipoSelect.style.display = 'inline-block';
+                adicionaisSelecionados.push({
+                    id: adicionalId,
+                    nome: nome,
+                    preco: parseFloat(preco),
+                    tipo: 'inteira'
+                });
+            } else {
+                if (tipoSelect) tipoSelect.style.display = 'none';
+                adicionaisSelecionados = adicionaisSelecionados.filter(a => a.id !== adicionalId);
+            }
+            
+            calcularTotal();
+        }
+
+        function alterarQuantidade(delta) {
+            const input = document.getElementById('quantityInput');
+            const novaQuantidade = Math.max(1, parseInt(input.value) + delta);
+            input.value = novaQuantidade;
+            calcularTotal();
+        }
+
+        function calcularTotal() {
+            if (!produtoAtual) return;
+
+            const quantidade = parseInt(document.getElementById('quantityInput').value) || 1;
+            let total = parseFloat(produtoAtual.preco) * quantidade;
+
+            // Adicionar preço da borda
+            if (bordaSelecionada && bordaSelecionada.preco) {
+                total += bordaSelecionada.preco * quantidade;
+            }
+
+            // Adicionar preço dos adicionais
+            adicionaisSelecionados.forEach(adicional => {
+                total += adicional.preco * quantidade;
+            });
+
+            document.getElementById('totalPrice').textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        function adicionarAoCarrinho() {
+            if (!produtoAtual) return;
+
+            // Validações
+            if (produtoAtual.tipo_produto === 'pizza' || produtoAtual.tipo_produto === 'esfiha') {
+                if (saboresSelecionados.length === 0) {
+                    alert('Selecione pelo menos um sabor');
+                    return;
+                }
+                
+                if (formatoSelecionado === 'meia' && saboresSelecionados.length < 2) {
+                    alert('Para pizza meia a meia, selecione 2 sabores');
+                    return;
+                }
+            }
+
+            const quantidade = parseInt(document.getElementById('quantityInput').value) || 1;
+            
+            // Criar item do carrinho
+            const item = {
+                id: Date.now().toString(),
+                produto_id: produtoAtual.id,
+                produto_nome: produtoAtual.nome,
+                produto_preco: parseFloat(produtoAtual.preco),
+                tipo_produto: produtoAtual.tipo_produto,
+                quantidade: quantidade,
+                formato: formatoSelecionado,
+                sabores: saboresSelecionados.map(id => {
+                    const produto = produtos.find(p => p.id === id);
+                    return { id, nome: produto ? produto.nome : 'Sabor' };
+                }),
+                borda: bordaSelecionada,
+                adicionais: [...adicionaisSelecionados],
+                observacao: '',
+                total: parseFloat(document.getElementById('totalPrice').textContent.replace('R$ ', '').replace(',', '.'))
+            };
+
+            // Salvar no localStorage
+            let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+            carrinho.push(item);
+            localStorage.setItem('carrinho', JSON.stringify(carrinho));
+
+            atualizarCarrinho();
+            fecharModal();
+            
+            // Feedback visual
+            mostrarNotificacao('Item adicionado ao carrinho!', 'success');
+        }
+
+        function mostrarNotificacao(mensagem, tipo = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 2000;
+                background: ${tipo === 'success' ? '#28a745' : '#007bff'}; 
+                color: white; padding: 15px 20px;
+                border-radius: 10px; font-weight: bold;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = mensagem;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function atualizarCarrinho() {
+            const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+            const totalItens = carrinho.reduce((sum, item) => sum + item.quantidade, 0);
+            document.getElementById('cartCount').textContent = totalItens;
+        }
+
+        function fecharModal() {
+            document.getElementById('customModal').style.display = 'none';
+            produtoAtual = null;
+        }
+
+        // Event Listeners
+        window.onclick = function(event) {
+            const modal = document.getElementById('customModal');
+            if (event.target === modal) {
+                fecharModal();
+            }
+        };
+
+        // Animação de entrada
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Carregar cardápio ao inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarCardapio();
+        });
+    </script>
+</body>
+</html>

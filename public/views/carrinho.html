@@ -1,1 +1,172 @@
-[O conteúdo HTML do carrinho avançado seria inserido aqui - mesmo código do artifact anterior]
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrinho - Pizzaria Rodrigo's</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #e53e3e, #c62d2d); color: white; padding: 15px 0; }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-menu { display: flex; gap: 20px; }
+        .nav-menu a { color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; }
+        .nav-menu a.active { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .cart-container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .cart-items { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .cart-header { padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; margin-bottom: 20px; }
+        .cart-item { padding: 20px; border-bottom: 1px solid #f0f0f0; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .item-name { font-size: 1.2em; font-weight: bold; color: #333; }
+        .item-price { font-size: 1.1em; color: #e53e3e; font-weight: bold; }
+        .item-details { color: #666; margin-bottom: 10px; line-height: 1.4; }
+        .item-controls { display: flex; justify-content: space-between; align-items: center; }
+        .quantity-controls { display: flex; align-items: center; gap: 10px; }
+        .qty-btn { width: 30px; height: 30px; border: none; background: #e53e3e; color: white; border-radius: 50%; cursor: pointer; }
+        .quantity-display { font-weight: bold; min-width: 30px; text-align: center; }
+        .remove-btn { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .checkout-panel { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: fit-content; }
+        .summary-line { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .summary-total { font-size: 1.3em; font-weight: bold; color: #e53e3e; padding-top: 15px; border-top: 2px solid #f0f0f0; }
+        .checkout-btn { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .empty-cart { text-align: center; padding: 50px; color: #666; }
+        .continue-shopping { background: #e53e3e; color: white; padding: 12px 24px; border: none; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 20px; }
+        @media (max-width: 768px) { .cart-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>🍕 Pizzaria Rodrigo's</h1>
+            <nav class="nav-menu">
+                <a href="/">Home</a>
+                <a href="/cardapio">Cardápio</a>
+                <a href="/carrinho" class="active">Carrinho</a>
+                <a href="/pedidos">Meus Pedidos</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="cartContainer"></div>
+    </div>
+
+    <script>
+        function carregarCarrinho() {
+            const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+            renderizarCarrinho(carrinho);
+        }
+
+        function renderizarCarrinho(carrinho) {
+            const container = document.getElementById('cartContainer');
+            
+            if (carrinho.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <h2>Seu carrinho está vazio</h2>
+                        <p>Adicione alguns itens deliciosos do nosso cardápio!</p>
+                        <a href="/cardapio" class="continue-shopping">Ver Cardápio</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const subtotal = carrinho.reduce((sum, item) => sum + item.total, 0);
+            const taxaEntrega = 5.00;
+            const total = subtotal + taxaEntrega;
+
+            container.innerHTML = `
+                <div class="cart-container">
+                    <div class="cart-items">
+                        <div class="cart-header">
+                            <h2>Seus Itens (${carrinho.length})</h2>
+                        </div>
+                        ${carrinho.map((item, index) => `
+                            <div class="cart-item">
+                                <div class="item-header">
+                                    <div class="item-name">${item.produto_nome}</div>
+                                    <div class="item-price">R$ ${item.total.toFixed(2)}</div>
+                                </div>
+                                <div class="item-details">
+                                    ${item.formato === 'meia' && item.sabores.length === 2 ? 
+                                        `<strong>Meia a Meia:</strong> ${item.sabores.map(s => s.nome).join(' + ')}` :
+                                        item.sabores.length > 0 ? `<strong>Sabor:</strong> ${item.sabores[0].nome}` : ''
+                                    }
+                                    ${item.borda && item.borda.preco > 0 ? `<br><strong>Borda:</strong> ${item.borda.nome} (+R$ ${item.borda.preco.toFixed(2)})` : ''}
+                                    ${item.adicionais.length > 0 ? `<br><strong>Adicionais:</strong> ${item.adicionais.map(a => `${a.nome} (+R$ ${a.preco.toFixed(2)})`).join(', ')}` : ''}
+                                </div>
+                                <div class="item-controls">
+                                    <div class="quantity-controls">
+                                        <button class="qty-btn" onclick="alterarQuantidade(${index}, -1)">-</button>
+                                        <span class="quantity-display">${item.quantidade}</span>
+                                        <button class="qty-btn" onclick="alterarQuantidade(${index}, 1)">+</button>
+                                    </div>
+                                    <button class="remove-btn" onclick="removerItem(${index})">Remover</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="checkout-panel">
+                        <h3>Resumo do Pedido</h3>
+                        <div style="margin: 20px 0;">
+                            <div class="summary-line">
+                                <span>Subtotal:</span>
+                                <span>R$ ${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="summary-line">
+                                <span>Taxa de Entrega:</span>
+                                <span>R$ ${taxaEntrega.toFixed(2)}</span>
+                            </div>
+                            <div class="summary-line summary-total">
+                                <span>Total:</span>
+                                <span>R$ ${total.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <button class="checkout-btn" onclick="finalizarPedido()">
+                            Finalizar Pedido - R$ ${total.toFixed(2)}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function alterarQuantidade(index, delta) {
+            const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+            if (carrinho[index]) {
+                const novaQuantidade = Math.max(1, carrinho[index].quantidade + delta);
+                const precoUnitario = carrinho[index].total / carrinho[index].quantidade;
+                
+                carrinho[index].quantidade = novaQuantidade;
+                carrinho[index].total = precoUnitario * novaQuantidade;
+                
+                localStorage.setItem('carrinho', JSON.stringify(carrinho));
+                renderizarCarrinho(carrinho);
+            }
+        }
+
+        function removerItem(index) {
+            if (confirm('Deseja remover este item do carrinho?')) {
+                const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+                carrinho.splice(index, 1);
+                localStorage.setItem('carrinho', JSON.stringify(carrinho));
+                renderizarCarrinho(carrinho);
+            }
+        }
+
+        function finalizarPedido() {
+            const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+            if (carrinho.length === 0) {
+                alert('Seu carrinho está vazio!');
+                return;
+            }
+            
+            alert('Funcionalidade de checkout em desenvolvimento! Em breve você poderá finalizar seus pedidos.');
+        }
+
+        // Carregar carrinho ao inicializar
+        carregarCarrinho();
+    </script>
+</body>
+</html>
